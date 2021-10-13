@@ -1,12 +1,12 @@
 import { Point } from "./point.js";
 
 export class Wave {
-  constructor() {
-    this.stageWidth = document.body.clientWidth;
-    this.stageHeight = document.body.clientHeight;
-    this.centerx = this.stageWidth / 2;
-    this.centery = this.stageHeight / 2;
-    this.point = new Point(this.centerx, this.centery);
+  constructor(index, totalPoints, color) {
+    // 고유의 인덱스를 가지고 웨이브가 차이를 두고 움직일 수 있도록
+    this.index = index;
+    this.totalPoints = totalPoints;
+    this.color = color;
+    this.points = [];
   }
 
   resize(stageWidth, stageHeight) {
@@ -18,21 +18,49 @@ export class Wave {
     this.centerX = stageWidth / 2;
     this.centerY = stageHeight / 2;
 
-    // this.init();
+    // 포인트의 간격은 스테이지 넓이에서 토탈 포인트만큼을 나눈 값
+    this.pointGap = this.stageWidth / (this.totalPoints - 1);
+
+    this.init();
   }
 
   init() {
-    // 각각의 포인트가 화면 중간을 기준으로 그려지도록 정의
-    // /this.point = new Point(this.centerX, this.centerY);
+    for (let i = 0; i < this.totalPoints; i++) {
+      this.points[i] = new Point(
+        this.index + i,
+        this.pointGap * i,
+        this.centerY
+      );
+    }
   }
 
   draw(ctx) {
     ctx.beginPath();
-    ctx.fillStyle = "#ff0000";
+    ctx.fillStyle = this.color;
 
-    this.point.update();
+    let prevX = this.points[0].x;
+    let prevY = this.points[0].y;
 
-    ctx.arc(this.point.x, this.point.y, 30, 0, 2 * Math.PI);
+    ctx.moveTo(prevX, prevY);
+
+    for (let i = 0; i < this.totalPoints; i++) {
+      const cx = (prevX + this.points[i].x) / 2;
+      const cy = (prevY + this.points[i].y) / 2;
+
+      ctx.quadraticCurveTo(prevX, prevY, cx, cy);
+
+      prevX = this.points[i].x;
+      prevY = this.points[i].y;
+
+      if (i > 0 && i < this.totalPoints - 1) {
+        this.points[i].update();
+      }
+    }
+
+    ctx.lineTo(prevX, prevY);
+    ctx.lineTo(this.stageWidth, this.stageHeight);
+    ctx.lineTo(this.points[0].x, this.stageHeight);
     ctx.fill();
+    ctx.closePath();
   }
 }
